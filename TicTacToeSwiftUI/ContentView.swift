@@ -8,16 +8,24 @@
 import SwiftUI
 
 struct ContentView: View {
+    
     @State private var board = Array(repeating: Array(repeating: "", count: 3), count: 3)
     @State private var player = "X"
     @State private var winner: Winner? = nil
-
+    
+    // UserDef
+    @State private var wins = UserDefaults.standard.integer(forKey: "wins")
+    @State private var losses = UserDefaults.standard.integer(forKey: "losses")
+    
     var body: some View {
         VStack {
-            Text(winner == nil ? "\(player)'s turn" : "\(winner!.winner) wins!")
+            Text(winner?.winner != nil ? "\(winner!.winner) wins!" : "\(player)'s turn")
                 .font(.title)
                 .padding()
-
+            
+            Text("X score: \(wins)")
+            Text("O score: \(losses)")
+            
             ForEach(0..<3) { row in
                 HStack {
                     ForEach(0..<3) { col in
@@ -39,13 +47,8 @@ struct ContentView: View {
                 }
             }
         }
-        .alert(item: $winner) { winner in
-            Alert(title: Text("\(winner.winner) wins!"), message: Text("Congratulations!"), dismissButton: .default(Text("Play again")) {
-                resetBoard()
-            })
-        }
     }
-
+    
     func checkWinner() {
         for i in 0..<3 {
             if board[i][0] == board[i][1] && board[i][1] == board[i][2] && !board[i][0].isEmpty {
@@ -63,12 +66,24 @@ struct ContentView: View {
         }
         if winner == nil && board.flatMap({ $0 }).filter({ $0.isEmpty }).count == 0 {
             winner = Winner(winner: "Nobody")
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                resetBoard()
+        }
+        
+        if let winner = winner?.winner {
+            if winner == "X" {
+                wins += 1
+                UserDefaults.standard.set(wins, forKey: "wins")
+            } else if winner == "O" {
+                losses += 1
+                UserDefaults.standard.set(losses, forKey: "losses")
             }
         }
+        
+        if winner != nil {
+            resetBoard()
+        }
     }
-
+    
+    
     //  Очищает игровое поле
     func resetBoard() {
         board = Array(repeating: Array(repeating: "", count: 3), count: 3)
